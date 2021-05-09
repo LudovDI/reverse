@@ -1,8 +1,13 @@
 package Model;
 
+import java.util.Arrays;
+import java.util.Objects;
+
 public class Field {
-    private final int[][] field;
-    private int player = -1;
+    private int[][] field;
+    private int player;
+    static final int PLAYER_BLACK = -1;
+    static final int PLAYER_WHITE = 1;
 
     public Field() {
         int[][] matrix = new int[8][8];
@@ -18,125 +23,163 @@ public class Field {
         matrix[3][3] = 1;
 
         this.field = matrix;
+        this.player = PLAYER_BLACK;
     }
 
     public int get(int i, int j) {
         return field[i][j];
     }
 
+    public void setCellValue(int i, int j, int value) {
+        this.field[i][j] = value;
+    }
+
     public int getPlayerScore(int player) {
-        int black = 0;
-        int white = 0;
+        int current = 0;
         for (int i = 0; i < 8; i++) {
             for (int j = 0; j < 8; j++) {
-                if (field[i][j] == 1) {
-                    white++;
-                } else {
-                    if (field[i][j] == -1) {
-                        black++;
-                    }
-                }
+                if (field[i][j] == player) current++;
             }
         }
-        if (player == -1) return black;
-        else return white;
+        return current;
     }
 
     public void nextTurn(int i, int j) {
         if (isPat()) this.player *= -1;
-        if (canDoTurn(i, j)) {
-            this.setCallValue(i, j, this.player);
-            this.updateField(i, j);
-            this.player *= -1;
-        }
+        this.field = canDoTurn(i, j);
     }
 
-    public void setCallValue(int i, int j, int value) {
-        this.field[i][j] = value;
+    public boolean updateField(final int i0, final int j0) {
+        boolean flagUpdateField = false;
+        boolean flagLineOtherChip;
+        boolean flagDiagonalOtherChip;
+        boolean flagDiagonal;
+        boolean flagLine;
+        int i;
+        int j;
+
+        if (field[i0][j0] != 0) return false;
+
+        {
+            flagLineOtherChip = false;
+            flagDiagonalOtherChip = false;
+            flagDiagonal = true;
+            flagLine = true;
+            i = i0;
+            j = j0;
+            while (i < 7) {
+                i++;
+                if (field[i][j0] == 0) flagLine = false;
+                else if (field[i][j0] == player * -1) flagLineOtherChip = true;
+                else if (field[i][j0] == player && !flagLineOtherChip) flagLine = false;
+                else if (field[i][j0] == player && flagLine && flagLineOtherChip) {
+                    this.cellPainting(i0, j0, i, j0);
+                    flagUpdateField = true;
+                    flagLine = false;
+                }
+                if (j0 + i - i0 < 8) {
+                    if (field[i][j0 + i - i0] == 0) flagDiagonal = false;
+                    else if (field[i][j0 + i - i0] == player * -1) flagDiagonalOtherChip = true;
+                    else if (field[i][j0 + i - i0] == player && !flagDiagonalOtherChip) flagDiagonal = false;
+                    else if (field[i][j0 + i - i0] == player && flagDiagonal && flagDiagonalOtherChip) {
+                        this.cellPainting(i0, j0, i, j0 + i - i0);
+                        flagUpdateField = true;
+                        flagDiagonal = false;
+                    }
+                    if (!flagDiagonal && !flagLine) break;
+                }
+            }
+        }
+        {
+            flagLineOtherChip = false;
+            flagDiagonalOtherChip = false;
+            flagDiagonal = true;
+            flagLine = true;
+            i = i0;
+            while (i > 0) {
+                i--;
+                if (field[i][j0] == 0) flagLine = false;
+                else if (field[i][j0] == player * -1) flagLineOtherChip = true;
+                else if (field[i][j0] == player && !flagLineOtherChip) flagLine = false;
+                else if (field[i][j0] == player && flagLine && flagLineOtherChip) {
+                    this.cellPainting(i, j0, i0, j0);
+                    flagUpdateField = true;
+                    flagLine = false;
+                }
+                if (j0 + i - i0 > -1) {
+                    if (field[i][j0 + i - i0] == 0) flagDiagonal = false;
+                    else if (field[i][j0 + i - i0] == player * -1) flagDiagonalOtherChip = true;
+                    else if (field[i][j0 + i - i0] == player && !flagDiagonalOtherChip) flagDiagonal = false;
+                    else if (field[i][j0 + i - i0] == player && flagDiagonal && flagDiagonalOtherChip) {
+                        this.cellPainting(i, j0 + i - i0, i0, j0);
+                        flagUpdateField = true;
+                        flagDiagonal = false;
+                    }
+                    if (!flagDiagonal && !flagLine) break;
+                }
+            }
+        }
+        {
+            flagLineOtherChip = false;
+            flagDiagonalOtherChip = false;
+            flagDiagonal = true;
+            flagLine = true;
+            while (j < 7) {
+                j++;
+                if (field[i0][j] == 0) flagLine = false;
+                else if (field[i0][j] == player * -1) flagLineOtherChip = true;
+                else if (field[i0][j] == player && !flagLineOtherChip) flagLine = false;
+                else if (field[i0][j] == player && flagLine && flagLineOtherChip) {
+                    this.cellPainting(i0, j0, i0, j);
+                    flagUpdateField = true;
+                    flagLine = false;
+                }
+                if (i0 + j0 - j > -1) {
+                    if (field[i0 + j0 - j][j] == 0) flagDiagonal = false;
+                    else if (field[i0 + j0 - j][j] == player * -1) flagDiagonalOtherChip = true;
+                    else if (field[i0 + j0 - j][j] == player && !flagDiagonalOtherChip) flagDiagonal = false;
+                    else if (field[i0 + j0 - j][j] == player && flagDiagonal && flagDiagonalOtherChip) {
+                        this.cellPainting(i0, j0, i0 + j0 - j, j);
+                        flagUpdateField = true;
+                        flagDiagonal = false;
+                    }
+                    if (!flagDiagonal && !flagLine) break;
+                }
+            }
+        }
+        {
+            flagLineOtherChip = false;
+            flagDiagonalOtherChip = false;
+            flagDiagonal = true;
+            flagLine = true;
+            j = j0;
+            while (j > 0) {
+                j--;
+                if (field[i0][j] == 0) flagLine = false;
+                else if (field[i0][j] == player * -1) flagLineOtherChip = true;
+                else if (field[i0][j] == player && !flagLineOtherChip) flagLine = false;
+                else if (field[i0][j] == player && flagLine && flagLineOtherChip) {
+                    this.cellPainting(i0, j, i0, j0);
+                    flagUpdateField = true;
+                    flagLine = false;
+                }
+                if (i0 + j0 - j < 8) {
+                    if (field[i0 + j0 - j][j] == 0) flagDiagonal = false;
+                    else if (field[i0 + j0 - j][j] == player * -1) flagDiagonalOtherChip = true;
+                    else if (field[i0 + j0 - j][j] == player && !flagDiagonalOtherChip) flagDiagonal = false;
+                    else if (field[i0 + j0 - j][j] == player && flagDiagonal && flagDiagonalOtherChip) {
+                        this.cellPainting(i0 + j0 - j, j, i0, j0);
+                        flagUpdateField = true;
+                        flagDiagonal = false;
+                    }
+                    if (!flagDiagonal && !flagLine) break;
+                }
+            }
+        }
+        return flagUpdateField;
     }
 
-    private void updateField(int i, int j) {
-        final int i0 = i;
-        final int j0 = j;
-
-        boolean flagDiagonal = true;
-        boolean flagLine = true;
-
-        while (i < 7) {
-            i++;
-            if (field[i][j0] == 0) flagLine = false;
-            else if ((field[i][j0] == player) && flagLine) {
-                this.cellPainting(i0, j0, i, j0);
-                flagLine = false;
-            }
-            if (j0 + i - i0 < 8) {
-                if (field[i][j0 + i - i0] == 0) flagDiagonal = false;
-                else if ((field[i][j0 + i - i0] == player) && flagDiagonal) {
-                    this.cellPainting(i0, j0, i, j0 + i - i0);
-                    flagDiagonal = false;
-                }
-                if (!flagDiagonal && !flagLine) break;
-            }
-        }
-        flagDiagonal = true;
-        flagLine = true;
-        i = i0;
-        while (i > 0) {
-            i--;
-            if (field[i][j0] == 0) flagLine = false;
-            else if ((field[i][j0] == player) && flagLine) {
-                this.cellPainting(i, j0, i0, j0);
-                flagLine = false;
-            }
-            if (j0 + i - i0 > -1) {
-                if (field[i][j0 + i - i0] == 0) flagDiagonal = false;
-                else if ((field[i][j0 + i - i0] == player) && flagDiagonal) {
-                    this.cellPainting(i, j0 + i - i0, i0, j0);
-                    flagDiagonal = false;
-                }
-                if (!flagDiagonal && !flagLine) break;
-            }
-        }
-        flagDiagonal = true;
-        flagLine = true;
-        while (j < 7) {
-            j++;
-            if (field[i0][j] == 0) flagLine = false;
-            else if ((field[i0][j] == player) && flagLine) {
-                this.cellPainting(i0, j0, i0, j);
-                flagLine = false;
-            }
-            if (i0 + j0 - j > -1) {
-                if (field[i0 + j0 - j][j] == 0) flagDiagonal = false;
-                else if ((field[i0 + j0 - j][j] == player) && flagDiagonal) {
-                    this.cellPainting(i0, j0, i0 + j0 - j, j);
-                    flagDiagonal = false;
-                }
-                if (!flagDiagonal && !flagLine) break;
-            }
-        }
-        flagDiagonal = true;
-        flagLine = true;
-        j = j0;
-        while (j > 0) {
-            j--;
-            if (field[i0][j] == 0) flagLine = false;
-            else if ((field[i0][j] == player) && flagLine) {
-                this.cellPainting(i0, j, i0, j0);
-                flagLine = false;
-            }
-            if (i0 + j0 - j < 8) {
-                if (field[i0 + j0 - j][j] == 0) flagDiagonal = false;
-                else if ((field[i0 + j0 - j][j] == player) && flagDiagonal) {
-                    this.cellPainting(i0 + j0 - j, j, i0, j0);
-                    flagDiagonal = false;
-                }
-                if (!flagDiagonal && !flagLine) break;
-            }
-        }
-    }
-
-    private void cellPainting(int i0, int j0, int i, int j) {
+    public void cellPainting(int i0, int j0, int i, int j) {
         if (i0 + j0 == i + j) {
             if (i0 < i) {
                 for (int index = i0 + 1; index < i; index++) {
@@ -177,95 +220,38 @@ public class Field {
         return true;
     }
 
-    public boolean canDoTurn(int i, int j) {
-        final int i0 = i;
-        final int j0 = j;
+    public int[][] canDoTurn(int i, int j) {
+        int[][] oldField = copy(this.field);
+        if (updateField(i, j)) {
+            setCellValue(i, j, this.player);
+            this.player *= -1;
+            return this.field;
+        } else {
+            return oldField;
+        }
+    }
 
-        boolean flagLineOtherChip = false;
-        boolean flagDiagonalOtherChip = false;
-        boolean flagDiagonal = true;
-        boolean flagLine = true;
-
-        if (field[i][j] != 0) return false;
-
-        while (i < 7) {
-            i++;
-            if (field[i][j0] == 0) flagLine = false;
-            else if (field[i][j0] == player * -1) flagLineOtherChip = true;
-            else if (field[i][j0] == player && !flagLineOtherChip) flagLine = false;
-            else if (field[i][j0] == player && flagLine && flagLineOtherChip) return true;
-            if (j0 + i - i0 < 8) {
-                if (field[i][j0 + i - i0] == 0) flagDiagonal = false;
-                else if (field[i][j0 + i - i0] == player * -1) flagDiagonalOtherChip = true;
-                else if (field[i][j0 + i - i0] == player && !flagDiagonalOtherChip) flagDiagonal = false;
-                else if (field[i][j0 + i - i0] == player && flagDiagonal && flagDiagonalOtherChip) return true;
-                if (!flagDiagonal && !flagLine) break;
-            }
+    private int[][] copy(int[][] field) {
+        int[][] newField = new int[8][8];
+        for (int i = 0; i < 8; i++) {
+            newField[i] = Arrays.copyOf(field[i], 8);
         }
-        flagLineOtherChip = false;
-        flagDiagonalOtherChip = false;
-        flagDiagonal = true;
-        flagLine = true;
-        i = i0;
-        while (i > 0) {
-            i--;
-            if (field[i][j0] == 0) flagLine = false;
-            else if (field[i][j0] == player * -1) flagLineOtherChip = true;
-            else if (field[i][j0] == player && !flagLineOtherChip) flagLine = false;
-            else if (field[i][j0] == player && flagLine && flagLineOtherChip) return true;
-            if (j0 + i - i0 > -1) {
-                if (field[i][j0 + i - i0] == 0) flagDiagonal = false;
-                else if (field[i][j0 + i - i0] == player * -1) flagDiagonalOtherChip = true;
-                else if (field[i][j0 + i - i0] == player && !flagDiagonalOtherChip) flagDiagonal = false;
-                else if (field[i][j0 + i - i0] == player && flagDiagonal && flagDiagonalOtherChip) return true;
-                if (!flagDiagonal && !flagLine) break;
-            }
-        }
-        flagLineOtherChip = false;
-        flagDiagonalOtherChip = false;
-        flagDiagonal = true;
-        flagLine = true;
-        while (j < 7) {
-            j++;
-            if (field[i0][j] == 0) flagLine = false;
-            else if (field[i0][j] == player * -1) flagLineOtherChip = true;
-            else if (field[i0][j] == player && !flagLineOtherChip) flagLine = false;
-            else if (field[i0][j] == player && flagLine && flagLineOtherChip) return true;
-            if (i0 + j0 - j > -1) {
-                if (field[i0 + j0 - j][j] == 0) flagDiagonal = false;
-                else if (field[i0 + j0 - j][j] == player * -1) flagDiagonalOtherChip = true;
-                else if (field[i0 + j0 - j][j] == player && !flagDiagonalOtherChip) flagDiagonal = false;
-                else if (field[i0 + j0 - j][j] == player && flagDiagonal && flagDiagonalOtherChip) return true;
-                if (!flagDiagonal && !flagLine) break;
-            }
-        }
-        flagLineOtherChip = false;
-        flagDiagonalOtherChip = false;
-        flagDiagonal = true;
-        flagLine = true;
-        j = j0;
-        while (j > 0) {
-            j--;
-            if (field[i0][j] == 0) flagLine = false;
-            else if (field[i0][j] == player * -1) flagLineOtherChip = true;
-            else if (field[i0][j] == player && !flagLineOtherChip) flagLine = false;
-            else if (field[i0][j] == player && flagLine && flagLineOtherChip) return true;
-            if (i0 + j0 - j < 8) {
-                if (field[i0 + j0 - j][j] == 0) flagDiagonal = false;
-                else if (field[i0 + j0 - j][j] == player * -1) flagDiagonalOtherChip = true;
-                else if (field[i0 + j0 - j][j] == player && !flagDiagonalOtherChip) flagDiagonal = false;
-                else if (field[i0 + j0 - j][j] == player && flagDiagonal && flagDiagonalOtherChip) return true;
-                if (!flagDiagonal && !flagLine) break;
-            }
-        }
-        return false;
+        return newField;
     }
 
     public boolean isPat() {
+        int[][] oldField = copy(this.field);
         for (int i = 0; i < 8; i++) {
             for (int j = 0; j < 8; j++) {
-                if (field[i][j] == 0) {
-                    if (this.canDoTurn(i, j)) return false;
+                if (oldField[i][j] == 0) {
+                    int[][] matrix = canDoTurn(i, j);
+                    for (int index = 0; index < 8; index++) {
+                        if (!Arrays.equals(matrix[index], oldField[index])) {
+                            this.field = oldField;
+                            this.player *= -1;
+                            return false;
+                        }
+                    }
                 }
             }
         }
@@ -277,31 +263,22 @@ public class Field {
         boolean flagBlack = false;
         for (int i = 0; i < 8; i++) {
             for (int j = 0; j < 8; j++) {
-                if (field[i][j] != 0) {
-                    if (field[i][j] == 1) flagWhite = true;
-                    else flagBlack = true;
-                }
+                if (this.get(i, j) == 1) flagWhite = true;
+                else if (this.get(i, j) == -1) flagBlack = true;
             }
         }
         return isFull() || (flagBlack ^ flagWhite);
     }
 
     public String identifyWinner() {
-        int black = 0;
-        int white = 0;
+        int sum = 0;
         for (int i = 0; i < 8; i++) {
             for (int j = 0; j < 8; j++) {
-                if (field[i][j] == 1) {
-                    white++;
-                } else {
-                    if (field[i][j] == -1) {
-                        black++;
-                    }
-                }
+                sum += field[i][j];
             }
         }
-        if (black > white) return "Победили черные!";
-        else if (black != white) return "Победили белые!";
+        if (sum < 0) return "Победили черные!";
+        else if (sum != 0) return "Победили белые!";
         else return "Победила ничья!";
     }
 
@@ -325,12 +302,18 @@ public class Field {
             return true;
         else {
             final Field other = (Field) obj;
+            if (player != other.player) return false;
             for (int i = 0; i < 8; i++) {
-                for (int j = 0; j < 8; j++) {
-                    if (this.getField()[i][j] != other.getField()[i][j]) return false;
-                }
+                if (!Arrays.equals(field[i], other.field[i])) return false;
             }
             return true;
         }
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Objects.hash(player);
+        result = 31 * result + Arrays.deepHashCode(field);
+        return result;
     }
 }

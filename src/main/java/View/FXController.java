@@ -7,7 +7,6 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.GridPane;
-import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Ellipse;
 
@@ -20,42 +19,37 @@ public class FXController {
     public Button startGame;
     public DialogPane infoBoard;
     public TextArea textArea;
-    private Field field;
-    private boolean flag = false;
-
-    StackPane[][] cheeps = new StackPane[8][8];
-
     public GridPane table;
+    private Field field;
+
+    Ellipse[][] chips = new Ellipse[8][8];
+
+
+
+    public FXController() {
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 8; j++) {
+                chips[i][j] = new Ellipse(13, 13);
+                chips[i][j].setVisible(false);
+                chips[i][j].setFill(Color.WHITE);
+            }
+        }
+    }
 
     public void start() {
         field = new Field();
-        if (!flag) {
-            for (int i = 0; i < 8; i++) {
-                for (int j = 0; j < 8; j++) {
-                    Ellipse whiteCheep = new Ellipse(13, 13);
-                    whiteCheep.setVisible(false);
-                    whiteCheep.setFill(Color.WHITE);
-                    Ellipse blackCheep = new Ellipse(13, 13);
-                    blackCheep.setVisible(false);
-                    blackCheep.setFill(Color.BLACK);
-                    StackPane stackPane = new StackPane(whiteCheep, blackCheep);
-                    table.add(stackPane, i, j);
-                    cheeps[i][j] = stackPane;
-                }
-            }
-            flag = true;
-        } else {
-            for (int i = 0; i < 8; i++) {
-                for (int j = 0; j < 8; j++) {
-                    cheeps[i][j].getChildren().get(0).setVisible(false);
-                    cheeps[i][j].getChildren().get(1).setVisible(false);
-                }
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 8; j++) {
+                chips[i][j].setVisible(false);
+                table.add(chips[i][j], i, j);
             }
         }
-        cheeps[3][3].getChildren().get(0).setVisible(true);
-        cheeps[3][4].getChildren().get(1).setVisible(true);
-        cheeps[4][3].getChildren().get(1).setVisible(true);
-        cheeps[4][4].getChildren().get(0).setVisible(true);
+        chips[3][3].setVisible(true);
+        chips[3][4].setVisible(true);
+        chips[4][3].setVisible(true);
+        chips[4][4].setVisible(true);
+        chips[3][4].setFill(Color.BLACK);
+        chips[4][3].setFill(Color.BLACK);
 
         currentPlayer.setText("Ход черных");
         startGame.setText("Начать заново");
@@ -68,6 +62,7 @@ public class FXController {
     public void turn(MouseEvent mouseEvent) {
         final int x = (int) Math.floor(mouseEvent.getX() / 40);
         final int y = (int) Math.floor(mouseEvent.getY() / 40);
+
         field.nextTurn(x, y);
         if (!field.isPat()) {
             if (field.getPlayer() == -1) currentPlayer.setText("Ход черных");
@@ -75,13 +70,21 @@ public class FXController {
         }
         for (int i = 0; i < 8; i++) {
             for (int j = 0; j < 8; j++) {
-                cheeps[i][j].getChildren().get(0).setVisible(field.get(i, j) == 1);
-                cheeps[i][j].getChildren().get(1).setVisible(field.get(i, j) == -1);
+                if (field.get(i, j) == 1) {
+                    chips[i][j].setVisible(true);
+                    chips[i][j].setFill(Color.WHITE);
+                } else if (field.get(i, j) == -1) {
+                    chips[i][j].setVisible(true);
+                    chips[i][j].setFill(Color.BLACK);
+                }
             }
         }
         whiteScores.setText(String.valueOf(field.getPlayerScore(1)));
         blackScores.setText(String.valueOf(field.getPlayerScore(-1)));
-        if (field.endGame()) identifyWinner.setText(field.identifyWinner());
+        if (field.endGame()) {
+            identifyWinner.setText(field.identifyWinner());
+            identifyWinner.setVisible(true);
+        }
     }
 
     public void info() {
